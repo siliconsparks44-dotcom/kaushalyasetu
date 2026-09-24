@@ -1,0 +1,32 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: lmi_platform_app
+    ports:
+      - "3000:3000"
+    environment:
+      - DATABASE_URL=file:./dev.db
+      - AUTH_SECRET=production-secret-lmi-platform-key-32-chars-min
+      - AI_PROVIDER=local
+      - NODE_ENV=production
+    restart: unless-stopped
+
+  # Optional PostgreSQL container for enterprise production deployment:
+  # postgres:
+  #   image: postgres:16-alpine
+  #   container_name: lmi_postgres
+  #   environment:
+  #     POSTGRES_USER: lmi_user
+  #     POSTGRES_PASSWORD: lmi_password
+  #     POSTGRES_DB: lmi_database
+  #   ports:
+  #     - "5432:5432"
+  #   volumes:
+  #     - pgdata:/var/lib/postgresql/data
+
+# volumes:
+#   pgdata:

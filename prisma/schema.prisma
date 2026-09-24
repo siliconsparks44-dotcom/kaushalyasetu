@@ -1,0 +1,698 @@
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id              String         @id @default(uuid())
+  email           String         @unique
+  passwordHash    String
+  fullName        String
+  role            String         // ADMIN, EMPLOYER, INSTITUTE, TRAINER, STUDENT
+  accountStatus   String         @default("ACTIVE") // ACTIVE, SUSPENDED, PENDING_VERIFICATION
+  organizationId  String?
+  avatar          String?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  organization    Organization?  @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  employerProfile Employer?
+  instituteProfile TrainingInstitute?
+  trainerProfile  Trainer?
+  studentProfile  Student?
+  auditLogs       AuditLog[]
+  notifications   Notification[]
+
+  @@index([email])
+  @@index([role])
+}
+
+model Organization {
+  id            String              @id @default(uuid())
+  name          String
+  type          String              // GOVERNMENT, EMPLOYER, INSTITUTE
+  districtId    String?
+  stateId       String?
+  contactEmail  String?
+  contactPhone  String?
+  address       String?
+  verified      Boolean             @default(false)
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+
+  users         User[]
+  employers     Employer[]
+  institutes    TrainingInstitute[]
+  trainers      Trainer[]
+  district      District?           @relation(fields: [districtId], references: [id], onDelete: SetNull)
+  state         State?              @relation(fields: [stateId], references: [id], onDelete: SetNull)
+  equipment     Equipment[]
+
+  @@index([type])
+  @@index([districtId])
+}
+
+model State {
+  id            String          @id @default(uuid())
+  name          String          @unique
+  code          String          @unique
+  createdAt     DateTime        @default(now())
+
+  districts     District[]
+  organizations Organization[]
+  institutes    TrainingInstitute[]
+  districtPlans DistrictPlan[]
+}
+
+model District {
+  id                String             @id @default(uuid())
+  name              String
+  code              String             @unique
+  stateId           String
+  population        Int?               @default(500000)
+  industrialBase    String?            // "Automotive, IT, Manufacturing, Textiles"
+  createdAt         DateTime           @default(now())
+
+  state             State              @relation(fields: [stateId], references: [id], onDelete: Cascade)
+  organizations     Organization[]
+  institutes        TrainingInstitute[]
+  jobs              Job[]
+  courses           Course[]
+  students          Student[]
+  capacities        TrainingCapacity[]
+  districtPlans     DistrictPlan[]
+  demandSnapshots   SkillDemandSnapshot[]
+
+  @@index([stateId])
+  @@index([name])
+}
+
+model Sector {
+  id                     String                 @id @default(uuid())
+  name                   String                 @unique
+  code                   String                 @unique
+  description            String?
+  growthRate             Float                  @default(5.0)
+  createdAt              DateTime               @default(now())
+
+  jobs                   Job[]
+  courses                Course[]
+  industryConsultations  IndustryConsultation[]
+  technologyTrends       TechnologyTrend[]
+  capacities             TrainingCapacity[]
+  districtPlans          DistrictPlan[]
+  demandSnapshots        SkillDemandSnapshot[]
+
+  @@index([name])
+}
+
+model Skill {
+  id                     String                   @id @default(uuid())
+  name                   String                   @unique
+  category               String                   // Programming, Data, Cloud, Manufacturing, Energy, Soft Skills, Automotive
+  subcategory            String?
+  description            String?
+  technology             String?                  // Underlying tool/framework e.g. "React", "Python"
+  sector                 String?
+  status                 String                   @default("ACTIVE") // ACTIVE, DEPRECATED, EMERGING
+  createdAt              DateTime                 @default(now())
+  updatedAt              DateTime                 @updatedAt
+
+  aliases                SkillAlias[]
+  jobSkills              JobSkill[]
+  courseSkills           CourseSkill[]
+  trainerSkills          TrainerSkill[]
+  curriculumRecs         CurriculumRecommendation[]
+  assessments            Assessment[]
+  demandSnapshots        SkillDemandSnapshot[]
+  capacities             TrainingCapacity[]
+
+  @@index([category])
+  @@index([name])
+  @@index([status])
+}
+
+model SkillAlias {
+  id        String   @id @default(uuid())
+  alias     String   @unique
+  skillId   String
+
+  skill     Skill    @relation(fields: [skillId], references: [id], onDelete: Cascade)
+
+  @@index([skillId])
+  @@index([alias])
+}
+
+model Employer {
+  id               String            @id @default(uuid())
+  userId           String            @unique
+  organizationId   String?
+  companyName      String
+  industrySector   String
+  website          String?
+  description      String?
+  companySize      String?           // "1-50", "51-200", "201-1000", "1000+"
+  headquarters     String?
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+
+  user             User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization     Organization?     @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  jobs             Job[]
+  surveys          EmployerSurvey[]
+  feedbackGiven    EmployerFeedback[]
+
+  @@index([companyName])
+}
+
+model Job {
+  id               String            @id @default(uuid())
+  employerId       String
+  title            String
+  sectorId         String?
+  districtId       String?
+  location         String
+  description      String
+  experienceLevel  String            @default("entry") // entry, mid, senior, lead
+  education        String?
+  salaryMin        Int?
+  salaryMax        Int?
+  employmentType   String            @default("FULL_TIME") // FULL_TIME, PART_TIME, CONTRACT, INTERNSHIP
+  openings         Int               @default(1)
+  status           String            @default("ACTIVE") // ACTIVE, CLOSED, DRAFT
+  source           String            @default("INTERNAL") // INTERNAL, CSV_IMPORT, EXTERNAL
+  isDemo           Boolean           @default(false)
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+
+  employer         Employer          @relation(fields: [employerId], references: [id], onDelete: Cascade)
+  sector           Sector?           @relation(fields: [sectorId], references: [id], onDelete: SetNull)
+  district         District?         @relation(fields: [districtId], references: [id], onDelete: SetNull)
+  jobSkills        JobSkill[]
+
+  @@index([title])
+  @@index([sectorId])
+  @@index([districtId])
+  @@index([status])
+}
+
+model JobSkill {
+  id          String   @id @default(uuid())
+  jobId       String
+  skillId     String
+  proficiency String   @default("intermediate") // beginner, intermediate, advanced, expert
+  importance  String   @default("required")     // required, preferred, optional
+
+  job         Job      @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  skill       Skill    @relation(fields: [skillId], references: [id], onDelete: Cascade)
+
+  @@unique([jobId, skillId])
+  @@index([skillId])
+  @@index([jobId])
+}
+
+model TrainingInstitute {
+  id             String         @id @default(uuid())
+  userId         String         @unique
+  organizationId String?
+  instituteName  String
+  code           String         @unique
+  instituteType  String         // ITI, POLYTECHNIC, UNIVERSITY, VOCATIONAL_CENTER
+  accreditation  String?
+  districtId     String?
+  stateId        String?
+  website        String?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  user           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization   Organization?  @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  district       District?      @relation(fields: [districtId], references: [id], onDelete: SetNull)
+  state          State?         @relation(fields: [stateId], references: [id], onDelete: SetNull)
+  courses        Course[]
+
+  @@index([code])
+  @@index([districtId])
+}
+
+model Course {
+  id              String                     @id @default(uuid())
+  instituteId     String
+  title           String
+  code            String                     @unique
+  sectorId        String?
+  qualification   String?                    // Diploma, Certificate, Degree
+  durationWeeks   Int                        @default(12)
+  level           String                     @default("intermediate") // beginner, intermediate, advanced
+  description     String
+  capacity        Int                        @default(60)
+  districtId      String?
+  status          String                     @default("ACTIVE") // ACTIVE, UNDER_REVIEW, POTENTIAL_OVERSUPPLY, ARCHIVED
+  isDemo          Boolean                    @default(false)
+  createdAt       DateTime                   @default(now())
+  updatedAt       DateTime                   @updatedAt
+
+  institute       TrainingInstitute          @relation(fields: [instituteId], references: [id], onDelete: Cascade)
+  sector          Sector?                    @relation(fields: [sectorId], references: [id], onDelete: SetNull)
+  district        District?                  @relation(fields: [districtId], references: [id], onDelete: SetNull)
+  modules         CourseModule[]
+  courseSkills    CourseSkill[]
+  curriculums     Curriculum[]
+  recommendations CurriculumRecommendation[]
+  placements      Placement[]
+  equipment       Equipment[]
+  capacities      TrainingCapacity[]
+
+  @@index([title])
+  @@index([sectorId])
+  @@index([districtId])
+  @@index([status])
+}
+
+model CourseModule {
+  id             String   @id @default(uuid())
+  courseId       String
+  title          String
+  description    String?
+  theoryHours    Int      @default(20)
+  practicalHours Int      @default(40)
+  orderIndex     Int      @default(0)
+
+  course         Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@index([courseId])
+}
+
+model CourseSkill {
+  id             String   @id @default(uuid())
+  courseId       String
+  skillId        String
+  proficiency    String   @default("intermediate") // beginner, intermediate, advanced, expert
+  theoryHours    Int      @default(10)
+  practicalHours Int      @default(20)
+
+  course         Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  skill          Skill    @relation(fields: [skillId], references: [id], onDelete: Cascade)
+
+  @@unique([courseId, skillId])
+  @@index([courseId])
+  @@index([skillId])
+}
+
+model Curriculum {
+  id                    String              @id @default(uuid())
+  courseId              String
+  title                 String
+  currentVersion        String              @default("v1.0")
+  status                String              @default("PUBLISHED") // DRAFT, UNDER_REVIEW, PUBLISHED
+  learningOutcomes      String?
+  assessmentMethod      String?
+  trainerRequirements   String?
+  equipmentRequirements String?
+  updatedAt             DateTime            @updatedAt
+
+  course                Course              @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  versions              CurriculumVersion[]
+
+  @@index([courseId])
+}
+
+model CurriculumVersion {
+  id            String      @id @default(uuid())
+  curriculumId  String
+  versionNumber String      // v1.0, v1.1, v2.0
+  changeSummary String
+  approvedBy    String?
+  status        String      @default("ACTIVE") // ACTIVE, SUPERSEDED
+  createdAt     DateTime    @default(now())
+
+  curriculum    Curriculum  @relation(fields: [curriculumId], references: [id], onDelete: Cascade)
+
+  @@index([curriculumId])
+}
+
+model CurriculumRecommendation {
+  id             String    @id @default(uuid())
+  courseId       String
+  actionType     String    // ADD, UPDATE, INCREASE_PRACTICAL, CONSIDER, REVIEW
+  skillId        String?
+  affectedModule String?
+  reason         String
+  supportingData String?   // JSON or text with job vacancy counts, market %
+  confidence     Float     @default(0.85)
+  source         String    @default("AI_MARKET_INTELLIGENCE")
+  status         String    @default("PENDING") // PENDING, APPROVED, REJECTED
+  reviewedBy     String?
+  reviewNotes    String?
+  createdAt      DateTime  @default(now())
+  reviewedAt     DateTime?
+
+  course         Course    @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  skill          Skill?    @relation(fields: [skillId], references: [id], onDelete: SetNull)
+
+  @@index([courseId])
+  @@index([status])
+}
+
+model Trainer {
+  id              String         @id @default(uuid())
+  userId          String         @unique
+  organizationId  String?
+  fullName        String
+  qualification   String
+  experienceYears Int            @default(3)
+  location        String
+  bio             String?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  user            User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization    Organization?  @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  trainerSkills   TrainerSkill[]
+
+  @@index([fullName])
+}
+
+model TrainerSkill {
+  id                String   @id @default(uuid())
+  trainerId         String
+  skillId           String
+  proficiency       String   @default("intermediate") // beginner, intermediate, advanced, expert
+  verified          Boolean  @default(false)
+  certified         Boolean  @default(false)
+  certificationName String?
+  createdAt         DateTime @default(now())
+
+  trainer           Trainer  @relation(fields: [trainerId], references: [id], onDelete: Cascade)
+  skill             Skill    @relation(fields: [skillId], references: [id], onDelete: Cascade)
+
+  @@unique([trainerId, skillId])
+  @@index([trainerId])
+  @@index([skillId])
+}
+
+model Equipment {
+  id                String        @id @default(uuid())
+  instituteId       String?
+  name              String
+  category          String        // Computing, CNC/Machinery, Electrical/EV, Lab Tools
+  totalQuantity     Int           @default(10)
+  availableQuantity Int           @default(10)
+  conditionStatus   String        @default("OPERATIONAL") // OPERATIONAL, MAINTENANCE, DEPRECATED
+  location          String
+  courseId          String?
+  requiredSkills    String?       // Comma separated skill names
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  organization      Organization? @relation(fields: [instituteId], references: [id], onDelete: SetNull)
+  course            Course?       @relation(fields: [courseId], references: [id], onDelete: SetNull)
+
+  @@index([category])
+  @@index([courseId])
+}
+
+model Student {
+  id             String             @id @default(uuid())
+  userId         String             @unique
+  fullName       String
+  educationLevel String?            // High School, Diploma, Bachelor, Master
+  location       String?
+  districtId     String?
+  resumeUrl      String?
+  resumeText     String?
+  extractedSkills String?           // JSON array of strings
+  bio            String?
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+
+  user           User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  district       District?          @relation(fields: [districtId], references: [id], onDelete: SetNull)
+  placements     Placement[]
+  results        AssessmentResult[]
+
+  @@index([userId])
+  @@index([districtId])
+}
+
+model Placement {
+  id             String            @id @default(uuid())
+  studentId      String
+  courseId       String
+  employerName   String
+  role           String
+  salary         Int               @default(25000)
+  location       String
+  placementDate  DateTime          @default(now())
+  employmentType String            @default("FULL_TIME")
+  skillsUsed     String?           // Comma separated
+  createdAt      DateTime          @default(now())
+
+  student        Student           @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  course         Course            @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  feedback       EmployerFeedback?
+
+  @@index([courseId])
+  @@index([studentId])
+}
+
+model EmployerFeedback {
+  id                     String    @id @default(uuid())
+  placementId            String    @unique
+  employerId             String
+  candidateJobReady      Boolean   @default(true)
+  technicalSkillRating   Int       @default(4) // 1 to 5
+  softSkillRating        Int       @default(4)
+  productivityRating     Int       @default(4)
+  trainingRelevanceRating Int      @default(4)
+  curriculumFeedback     String?
+  createdAt              DateTime  @default(now())
+
+  placement              Placement @relation(fields: [placementId], references: [id], onDelete: Cascade)
+  employer               Employer  @relation(fields: [employerId], references: [id], onDelete: Cascade)
+
+  @@index([employerId])
+}
+
+model EmployerSurvey {
+  id                   String   @id @default(uuid())
+  employerId           String
+  surveyYear           Int      @default(2026)
+  quarter              Int      @default(3)
+  difficultToHireRoles String   // JSON or text
+  emergingTechNeeds    String   // JSON or text
+  productivityFeedback String?
+  trainingRequirements String?
+  rawResponses         String?  // JSON string
+  createdAt            DateTime @default(now())
+
+  employer             Employer @relation(fields: [employerId], references: [id], onDelete: Cascade)
+
+  @@index([employerId])
+}
+
+model IndustryConsultation {
+  id                    String   @id @default(uuid())
+  companyName           String
+  sectorId              String?
+  expertName            String
+  consultationDate      DateTime @default(now())
+  location              String
+  roleEvaluated         String
+  requiredSkills        String   // Comma separated or JSON
+  emergingTech          String?
+  curriculumSuggestions String?
+  equipmentRequirements String?
+  trainerRequirements   String?
+  notes                 String?
+  conductedBy           String   // Admin user name or ID
+  createdAt             DateTime @default(now())
+
+  sector                Sector?  @relation(fields: [sectorId], references: [id], onDelete: SetNull)
+
+  @@index([companyName])
+  @@index([sectorId])
+}
+
+model TrainingCapacity {
+  id                String    @id @default(uuid())
+  districtId        String
+  sectorId          String
+  courseId          String?
+  skillId           String?
+  currentCapacity   Int       @default(100)
+  enrolledStudents  Int       @default(80)
+  vacancyCount      Int       @default(120)
+  placementRate     Float     @default(65.0)
+  oversupplyFlag    Boolean   @default(false)
+  reviewRecommended Boolean   @default(false)
+  year              Int       @default(2026)
+  createdAt         DateTime  @default(now())
+
+  district          District  @relation(fields: [districtId], references: [id], onDelete: Cascade)
+  sector            Sector    @relation(fields: [sectorId], references: [id], onDelete: Cascade)
+  course            Course?   @relation(fields: [courseId], references: [id], onDelete: SetNull)
+  skill             Skill?    @relation(fields: [skillId], references: [id], onDelete: SetNull)
+
+  @@index([districtId])
+  @@index([sectorId])
+}
+
+model DistrictPlan {
+  id                  String                       @id @default(uuid())
+  title               String
+  stateId             String
+  districtId          String
+  sectorId            String
+  targetYear          Int                          @default(2026)
+  status              String                       @default("DRAFT") // DRAFT, PUBLISHED, ARCHIVED
+  highDemandRoles     String                       // JSON string
+  highDemandSkills    String                       // JSON string
+  currentCapacity     Int                          @default(0)
+  recommendedCapacity Int                          @default(0)
+  trainerGapCount     Int                          @default(0)
+  equipmentGapCount   Int                          @default(0)
+  justification       String?
+  createdBy           String?
+  createdAt           DateTime                     @default(now())
+  updatedAt           DateTime                     @updatedAt
+
+  state               State                        @relation(fields: [stateId], references: [id], onDelete: Cascade)
+  district            District                     @relation(fields: [districtId], references: [id], onDelete: Cascade)
+  sector              Sector                       @relation(fields: [sectorId], references: [id], onDelete: Cascade)
+  recommendations     DistrictPlanRecommendation[]
+
+  @@index([districtId])
+  @@index([sectorId])
+}
+
+model DistrictPlanRecommendation {
+  id             String       @id @default(uuid())
+  districtPlanId String
+  type           String       // CAPACITY_EXPANSION, COURSE_REVISION, TRAINER_UPKILLING, EQUIPMENT_PROCUREMENT
+  title          String
+  description    String
+  priority       String       @default("HIGH") // HIGH, MEDIUM, LOW
+  metricsEvidence String?     // e.g. "Vacancies: 450 vs Seats: 120"
+  createdAt      DateTime     @default(now())
+
+  districtPlan   DistrictPlan @relation(fields: [districtPlanId], references: [id], onDelete: Cascade)
+
+  @@index([districtPlanId])
+}
+
+model TechnologyTrend {
+  id                     String   @id @default(uuid())
+  name                   String   @unique
+  sectorId               String?
+  growthRatePercent      Float    @default(25.0)
+  industryAdoptionLevel  String   @default("HIGH") // EARLY, EMERGING, HIGH, MAINSTREAM
+  requiredSkills         String   // Comma separated
+  trainingReadinessScore Float    @default(45.0)   // 0-100
+  description            String?
+  source                 String   @default("INDUSTRY_ANALYTICS")
+  createdAt              DateTime @default(now())
+
+  sector                 Sector?  @relation(fields: [sectorId], references: [id], onDelete: SetNull)
+
+  @@index([name])
+}
+
+model SkillDemandSnapshot {
+  id               String   @id @default(uuid())
+  skillId          String
+  districtId       String?
+  sectorId         String?
+  demandScore      Float    @default(75.0) // 0-100
+  growthRate       Float    @default(12.0)
+  jobPostingsCount Int      @default(10)
+  snapshotDate     DateTime @default(now())
+
+  skill            Skill    @relation(fields: [skillId], references: [id], onDelete: Cascade)
+  district         District? @relation(fields: [districtId], references: [id], onDelete: SetNull)
+  sector           Sector?   @relation(fields: [sectorId], references: [id], onDelete: SetNull)
+
+  @@index([skillId])
+  @@index([snapshotDate])
+}
+
+model Assessment {
+  id              String               @id @default(uuid())
+  title           String
+  skillId         String
+  description     String?
+  durationMinutes Int                  @default(20)
+  passingScore    Int                  @default(70)
+  createdAt       DateTime             @default(now())
+
+  skill           Skill                @relation(fields: [skillId], references: [id], onDelete: Cascade)
+  questions       AssessmentQuestion[]
+  results         AssessmentResult[]
+
+  @@index([skillId])
+}
+
+model AssessmentQuestion {
+  id                 String     @id @default(uuid())
+  assessmentId       String
+  questionText       String
+  optionsJson        String     // JSON array of strings
+  correctOptionIndex Int        @default(0)
+
+  assessment         Assessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+
+  @@index([assessmentId])
+}
+
+model AssessmentResult {
+  id           String     @id @default(uuid())
+  studentId    String
+  assessmentId String
+  score        Int
+  passed       Boolean
+  takenAt      DateTime   @default(now())
+
+  student      Student    @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  assessment   Assessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+
+  @@index([studentId])
+  @@index([assessmentId])
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String?
+  role      String?  // If null, for specific user, otherwise broadcast by role
+  title     String
+  message   String
+  type      String   @default("INFO") // INFO, WARNING, SUCCESS, ALERT
+  isRead    Boolean  @default(false)
+  link      String?
+  createdAt DateTime @default(now())
+
+  user      User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([role])
+}
+
+model AuditLog {
+  id          String   @id @default(uuid())
+  userId      String?
+  action      String   // LOGIN, COURSE_UPDATE, RECOMMENDATION_APPROVED, DISTRICT_PLAN_PUBLISHED
+  entityType  String
+  entityId    String?
+  detailsJson String?
+  ipAddress   String?
+  createdAt   DateTime @default(now())
+
+  user        User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([action])
+  @@index([createdAt])
+}
