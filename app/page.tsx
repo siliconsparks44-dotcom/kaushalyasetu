@@ -49,7 +49,7 @@ export default function LandingPage() {
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-500/10 border border-blue-400/30 text-blue-300 text-xs font-semibold mb-6">
             <Sparkles className="w-3.5 h-3.5 text-blue-400" />
-            <span>Problem Statement 26134 • National Skill Alignment Framework</span>
+            <span>KaushalyaSetu • Problem Statement 26134 • National Skill Alignment Framework</span>
           </div>
 
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight max-w-5xl mx-auto leading-tight sm:leading-tight">

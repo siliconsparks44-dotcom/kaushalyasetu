@@ -1,4 +1,5 @@
-# Labour Market Intelligence & Curriculum Alignment Platform (LMI-CAP)
+# KaushalyaSetu (कौशल्य सेतु)
+### Labour Market Intelligence & Curriculum Alignment Platform (Problem Statement 26134)
 ### Problem Statement: 26134
 
 An evidence-based full-stack intelligence and governance platform translating real-time industry demand into curriculum design, training capacity, and career pathways.
@@ -6,7 +7,7 @@ An evidence-based full-stack intelligence and governance platform translating re
 ---
 
 ## 🌟 Overview
-Educational and vocational skill programs frequently lag behind rapid technological advancements and changing employer expectations. LMI-CAP establishes a continuous, closed-loop feedback mechanism connecting:
+Educational and vocational skill programs frequently lag behind rapid technological advancements and changing employer expectations. KaushalyaSetu establishes a continuous, closed-loop feedback mechanism connecting:
 1. **Government / Administrators & District Skill Councils**: District-level skill demand forecasting, capacity allocation, course obsolescence/oversupply flags, and multi-sector planning.
 2. **Industry / Employers**: Job postings, real-time skill demand definition, candidate validation, employer surveys, and placement satisfaction feedback.
 3. **Training Institutes / Academia**: Course and curriculum management, skill-to-industry alignment scoring, human-in-the-loop curriculum updates, and placement records.

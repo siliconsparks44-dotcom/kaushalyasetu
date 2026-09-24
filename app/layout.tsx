@@ -2,7 +2,7 @@ import './globals.css';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Labour Market Intelligence & Curriculum Alignment Platform (Problem 26134)',
+  title: 'KaushalyaSetu - Labour Market Intelligence & Curriculum Alignment Platform (Problem 26134)',
   description: 'Evidence-based platform translating real-time industry demand into curriculum design, training capacity, and career pathways.',
 };
 

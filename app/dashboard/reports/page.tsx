@@ -116,7 +116,7 @@ export default function ReportsPage() {
                 Labour Market Intelligence & Curriculum Audit Report (2026-27)
               </h2>
               <span className="text-xs text-slate-500 font-mono">
-                Document Ref: LMI-CAP/26134/REP-042 • Generated: {new Date().toLocaleDateString('en-GB')}
+                Document Ref: KAUSHALYA-SETU/26134/REP-042 • Generated: {new Date().toLocaleDateString('en-GB')}
               </span>
             </div>
 

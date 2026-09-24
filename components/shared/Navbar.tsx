@@ -78,7 +78,7 @@ export default function Navbar() {
             </div>
             <div>
               <span className="font-bold text-slate-900 tracking-tight text-base sm:text-lg block leading-tight">
-                LMI-CAP
+                KaushalyaSetu
               </span>
               <span className="text-[11px] text-slate-500 block leading-tight">
                 Labour Market Intelligence

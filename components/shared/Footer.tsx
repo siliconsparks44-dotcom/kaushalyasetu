@@ -10,7 +10,7 @@ export default function Footer() {
           <div>
             <div className="flex items-center gap-2 text-white font-bold text-sm mb-3">
               <Compass className="w-5 h-5 text-blue-400" />
-              <span>LMI-CAP Platform</span>
+              <span>KaushalyaSetu Platform</span>
             </div>
             <p className="text-slate-400 leading-relaxed text-xs">
               Labour Market Intelligence & Curriculum Alignment Platform addressing National Problem Statement 26134.
@@ -67,7 +67,7 @@ export default function Footer() {
         </div>
 
         <div className="mt-8 pt-6 border-t border-slate-800 flex flex-col sm:flex-row items-center justify-between text-slate-500 text-[11px]">
-          <p>© 2026 Labour Market Intelligence & Curriculum Alignment Platform. All rights reserved.</p>
+          <p>© 2026 KaushalyaSetu - Labour Market Intelligence & Curriculum Alignment Platform. All rights reserved.</p>
           <p>Designed for Ministry of Skill Development & District Skill Councils.</p>
         </div>
       </div>

@@ -65,7 +65,7 @@ export default function LoginPage() {
               <Compass className="w-7 h-7" />
             </div>
             <h2 className="mt-4 text-2xl font-extrabold text-slate-900 tracking-tight">
-              Sign in to LMI-CAP
+              Sign in to KaushalyaSetu
             </h2>
             <p className="mt-1 text-xs text-slate-500">
               Role-Based Access for Policy, Industry, Academia & Students
